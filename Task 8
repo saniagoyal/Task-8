@@ -1,0 +1,43 @@
+#include <ESP8266WiFi.h> //Library
+String apiWritekey = "52KRVUKXLQUIS29T"; //Write your writeAPI here
+const char* ssid = "******"; //Write your SSID
+const char* password = "*******" ; //Write your Wifi Password
+const char* server = "api.thingspeak.com"; //To initializing the device with Thingspeak API
+WiFiClient client;
+void setup()
+{
+  Serial.begin(115200);
+  WiFi.disconnect(); //disconnecting previously connected Wifi
+  delay(10);
+  WiFi.begin(ssid, password); //connecting to provided Wifi
+  while (WiFi.status() != WL_CONNECTED) 
+  { 
+    delay(500); 
+  }
+  Serial.println("NodeMcu connected to wifi"); //NodeMCU connected to Wifi
+}
+void loop() 
+{
+float temp = analogRead(A0)/3.1; //temperature in Celsius degree
+  if (client.connect(server,80)) //connecting to Thingspeak Server
+  {
+    String tsData = apiWritekey;
+    tsData +="&field1=";  
+    tsData += String(temp);
+    tsData += "\r\n\r\n";
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: "+apiWritekey+"\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(tsData.length());
+    client.print("\n\n");
+    client.print(tsData); //temperature value sent to field1 of Thingspeak channel
+     
+    Serial.print("Temperature: "); //Displaying the temperature in serial monitor
+    Serial.print(temp);
+  }
+  client.stop();
+  delay(15000);
+}
